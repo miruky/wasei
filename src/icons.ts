@@ -11,9 +11,12 @@ const PATHS: Readonly<Record<string, string>> = {
   left: '<path d="M14 7l-5 5 5 5" />',
   right: '<path d="M10 7l5 5-5 5" />',
   link: '<path d="M9 14a4 4 0 0 0 5.66 0l2.83-2.83a4 4 0 0 0-5.66-5.66L10.5 6.5" /><path d="M15 10a4 4 0 0 0-5.66 0L6.5 12.84a4 4 0 0 0 5.66 5.66L13.5 17.5" />',
-  shuffle: '<path d="M4 6h3.5L17 18h3" /><path d="M17 6h3M4 18h3.5L11 13" /><path d="M17 4l3 2-3 2M17 16l3 2-3 2" />',
+  shuffle:
+    '<path d="M4 6h3.5L17 18h3" /><path d="M17 6h3M4 18h3.5L11 13" /><path d="M17 4l3 2-3 2M17 16l3 2-3 2" />',
   check: '<path d="M5 12.5 10 17 19 7" />',
-  music: '<path d="M9 18V5l11-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="17" cy="16" r="3" />',
+  music:
+    '<path d="M9 18V5l11-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="17" cy="16" r="3" />',
+  copy: '<rect x="9" y="9" width="11" height="11" rx="2.5" /><path d="M5 15V5.5A1.5 1.5 0 0 1 6.5 4H15" />',
 };
 
 export function icon(name: keyof typeof PATHS): string {
