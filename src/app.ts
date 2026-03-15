@@ -27,6 +27,7 @@ import {
   updateSlotAt,
 } from './lib/progression';
 import { Player, type PlayMode } from './lib/engine';
+import { progressionText } from './lib/format';
 import { decodeProgression, encodeProgression } from './lib/share';
 import { loadString, saveString } from './lib/storage';
 import { icon } from './icons';
@@ -41,7 +42,20 @@ interface State {
 }
 
 const MINORISH = new Set(['min', 'm7', 'm6', 'm9', 'mMaj7', 'dim', 'dim7', 'm7b5']);
-const TONIC_LABELS = ['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'];
+const TONIC_LABELS = [
+  'C',
+  'C#/Db',
+  'D',
+  'D#/Eb',
+  'E',
+  'F',
+  'F#/Gb',
+  'G',
+  'G#/Ab',
+  'A',
+  'A#/Bb',
+  'B',
+];
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 type Attrs = Record<string, string | number | boolean | null | undefined>;
@@ -64,7 +78,8 @@ function h<K extends keyof HTMLElementTagNameMap>(
   if (opts.html !== undefined) node.innerHTML = opts.html;
   if (opts.attrs) {
     for (const [k, v] of Object.entries(opts.attrs)) {
-      if (v !== null && v !== undefined && v !== false) node.setAttribute(k, v === true ? '' : String(v));
+      if (v !== null && v !== undefined && v !== false)
+        node.setAttribute(k, v === true ? '' : String(v));
     }
   }
   if (opts.on) {
@@ -81,7 +96,8 @@ function svg<K extends keyof SVGElementTagNameMap>(
 ): SVGElementTagNameMap[K] {
   const node = document.createElementNS(SVG_NS, tag);
   for (const [k, v] of Object.entries(attrs)) {
-    if (v !== null && v !== undefined && v !== false) node.setAttribute(k, v === true ? '' : String(v));
+    if (v !== null && v !== undefined && v !== false)
+      node.setAttribute(k, v === true ? '' : String(v));
   }
   for (const c of children) node.append(c);
   return node;
@@ -91,7 +107,14 @@ const cosd = (deg: number): number => Math.cos((deg * Math.PI) / 180);
 const sind = (deg: number): number => Math.sin((deg * Math.PI) / 180);
 const round = (x: number): string => x.toFixed(2);
 
-function annularSector(cx: number, cy: number, rO: number, rI: number, a0: number, a1: number): string {
+function annularSector(
+  cx: number,
+  cy: number,
+  rO: number,
+  rI: number,
+  a0: number,
+  a1: number,
+): string {
   const x0o = cx + rO * cosd(a0);
   const y0o = cy + rO * sind(a0);
   const x1o = cx + rO * cosd(a1);
@@ -138,7 +161,11 @@ export function mountApp(root: HTMLElement): void {
   }
 
   function symbolOf(slot: Slot): string {
-    return chordSymbol(slot.rootPc, slot.qualityId, accidentalForKey(state.prog.keyPc, state.prog.mode));
+    return chordSymbol(
+      slot.rootPc,
+      slot.qualityId,
+      accidentalForKey(state.prog.keyPc, state.prog.mode),
+    );
   }
 
   // ---- 状態更新 ----
@@ -221,10 +248,26 @@ export function mountApp(root: HTMLElement): void {
     CIRCLE.forEach((slice) => {
       const angle = circleAngle(slice.index);
       board.append(
-        buildWedge('major', slice.majorPc, slice.majorLabel, angle, 192, 142, majorInKey.has(slice.majorPc)),
+        buildWedge(
+          'major',
+          slice.majorPc,
+          slice.majorLabel,
+          angle,
+          192,
+          142,
+          majorInKey.has(slice.majorPc),
+        ),
       );
       board.append(
-        buildWedge('minor', slice.minorPc, slice.minorLabel, angle, 138, 94, minorInKey.has(slice.minorPc)),
+        buildWedge(
+          'minor',
+          slice.minorPc,
+          slice.minorLabel,
+          angle,
+          138,
+          94,
+          minorInKey.has(slice.minorPc),
+        ),
       );
     });
 
@@ -320,10 +363,11 @@ export function mountApp(root: HTMLElement): void {
       tonicSelect.append(option);
     });
 
-    const modeToggle = h('div', { class: 'segmented', attrs: { role: 'group', 'aria-label': '旋法' } }, [
-      modeButton('メジャー', 'major'),
-      modeButton('マイナー', 'minor'),
-    ]);
+    const modeToggle = h(
+      'div',
+      { class: 'segmented', attrs: { role: 'group', 'aria-label': '旋法' } },
+      [modeButton('メジャー', 'major'), modeButton('マイナー', 'minor')],
+    );
 
     const seventhBtn = h('button', {
       class: 'toggle',
@@ -351,20 +395,27 @@ export function mountApp(root: HTMLElement): void {
     const chips = h(
       'div',
       { class: 'diatonic', attrs: { role: 'group', 'aria-label': 'ダイアトニックコード' } },
-      chords.map((chord) =>
-        h(
+      chords.map((chord, i) => {
+        const chip = h(
           'button',
           {
             class: 'chip',
             attrs: { type: 'button' },
-            on: { click: () => addChord({ rootPc: chord.rootPc, qualityId: chord.qualityId, beats: 4 }) },
+            on: {
+              click: () => addChord({ rootPc: chord.rootPc, qualityId: chord.qualityId, beats: 4 }),
+            },
           },
           [
             h('span', { class: 'chip-roman', text: chord.roman }),
-            h('span', { class: 'chip-name', text: chordSymbol(chord.rootPc, chord.qualityId, acc) }),
+            h('span', {
+              class: 'chip-name',
+              text: chordSymbol(chord.rootPc, chord.qualityId, acc),
+            }),
           ],
-        ),
-      ),
+        );
+        chip.style.setProperty('--i', String(i));
+        return chip;
+      }),
     );
 
     keyHost.replaceChildren(controls, chips);
@@ -392,7 +443,10 @@ export function mountApp(root: HTMLElement): void {
       slotEls = [];
       progHost.replaceChildren(
         meta,
-        h('p', { class: 'empty', text: '五度圏かダイアトニックの和音をクリックして進行を組み立てます。' }),
+        h('p', {
+          class: 'empty',
+          text: '五度圏かダイアトニックの和音をクリックして進行を組み立てます。',
+        }),
       );
       return;
     }
@@ -415,7 +469,11 @@ export function mountApp(root: HTMLElement): void {
       attrs: { 'aria-label': 'コードの種類' },
       on: {
         change: (event) =>
-          commit(updateSlotAt(state.prog, index, { qualityId: (event.target as HTMLSelectElement).value })),
+          commit(
+            updateSlotAt(state.prog, index, {
+              qualityId: (event.target as HTMLSelectElement).value,
+            }),
+          ),
       },
     });
     for (const quality of QUALITIES) {
@@ -435,7 +493,12 @@ export function mountApp(root: HTMLElement): void {
     ]);
 
     const move = h('div', { class: 'slot-move' }, [
-      iconButton('left', '前へ移動', () => commit(moveSlot(state.prog, index, index - 1), false), index === 0),
+      iconButton(
+        'left',
+        '前へ移動',
+        () => commit(moveSlot(state.prog, index, index - 1), false),
+        index === 0,
+      ),
       iconButton(
         'right',
         '次へ移動',
@@ -444,7 +507,7 @@ export function mountApp(root: HTMLElement): void {
       ),
     ]);
 
-    return h(
+    const el = h(
       'li',
       {
         class: 'slot',
@@ -460,11 +523,19 @@ export function mountApp(root: HTMLElement): void {
           h('div', { class: 'slot-row' }, [
             stepper,
             move,
-            iconButton('trash', '削除', () => commit(removeSlotAt(state.prog, index), false), false, 'danger'),
+            iconButton(
+              'trash',
+              '削除',
+              () => commit(removeSlotAt(state.prog, index), false),
+              false,
+              'danger',
+            ),
           ]),
         ]),
       ],
     ) as HTMLLIElement;
+    el.style.setProperty('--i', String(index));
+    return el;
   }
 
   function changeBeats(index: number, delta: number): void {
@@ -482,14 +553,29 @@ export function mountApp(root: HTMLElement): void {
     attrs: { type: 'range', min: MIN_TEMPO, max: MAX_TEMPO, step: 1, 'aria-label': 'テンポ' },
   }) as HTMLInputElement;
   const tempoValue = h('span', { class: 'tempo-value' });
-  const loopBtn = h('button', { class: 'toggle', attrs: { type: 'button' }, html: `${icon('loop')}<span>ループ</span>` });
-  const presetSelect = h('select', { class: 'field', attrs: { 'aria-label': 'プリセット進行' } }) as HTMLSelectElement;
+  const loopBtn = h('button', {
+    class: 'toggle',
+    attrs: { type: 'button' },
+    html: `${icon('loop')}<span>ループ</span>`,
+  });
+  const presetSelect = h('select', {
+    class: 'field',
+    attrs: { 'aria-label': 'プリセット進行' },
+  }) as HTMLSelectElement;
   const shareBtn = h('button', {
     class: 'ghost',
     attrs: { type: 'button' },
     html: `${icon('link')}<span>リンクをコピー</span>`,
   });
-  const shareStatus = h('span', { class: 'share-status', attrs: { role: 'status', 'aria-live': 'polite' } });
+  const textBtn = h('button', {
+    class: 'ghost',
+    attrs: { type: 'button' },
+    html: `${icon('copy')}<span>テキストでコピー</span>`,
+  });
+  const shareStatus = h('span', {
+    class: 'share-status',
+    attrs: { role: 'status', 'aria-live': 'polite' },
+  });
 
   function buildTransport(): HTMLElement {
     playBtn.addEventListener('click', togglePlay);
@@ -506,18 +592,24 @@ export function mountApp(root: HTMLElement): void {
       syncTransport();
     });
 
-    const modeToggle = h('div', { class: 'segmented', attrs: { role: 'group', 'aria-label': '発音の仕方' } }, [
-      playModeButton('和音', 'pad'),
-      playModeButton('アルペジオ', 'arp'),
-    ]);
+    const modeToggle = h(
+      'div',
+      { class: 'segmented', attrs: { role: 'group', 'aria-label': '発音の仕方' } },
+      [playModeButton('和音', 'pad'), playModeButton('アルペジオ', 'arp')],
+    );
 
-    const transposeGroup = h('div', { class: 'segmented', attrs: { role: 'group', 'aria-label': '移調' } }, [
-      iconButton('minus', '半音下げる', () => commit(transpose(state.prog, -1), false)),
-      iconButton('plus', '半音上げる', () => commit(transpose(state.prog, 1), false)),
-    ]);
+    const transposeGroup = h(
+      'div',
+      { class: 'segmented', attrs: { role: 'group', 'aria-label': '移調' } },
+      [
+        iconButton('minus', '半音下げる', () => commit(transpose(state.prog, -1), false)),
+        iconButton('plus', '半音上げる', () => commit(transpose(state.prog, 1), false)),
+      ],
+    );
 
     presetSelect.append(h('option', { text: 'プリセットを選ぶ…', attrs: { value: '' } }));
-    for (const preset of PRESETS) presetSelect.append(h('option', { text: preset.name, attrs: { value: preset.id } }));
+    for (const preset of PRESETS)
+      presetSelect.append(h('option', { text: preset.name, attrs: { value: preset.id } }));
     presetSelect.addEventListener('change', () => {
       const preset = PRESETS.find((p) => p.id === presetSelect.value);
       if (preset) commit(preset.progression);
@@ -538,6 +630,7 @@ export function mountApp(root: HTMLElement): void {
     });
 
     shareBtn.addEventListener('click', copyLink);
+    textBtn.addEventListener('click', copyText);
 
     return h('div', { class: 'transport' }, [
       h('div', { class: 'transport-main' }, [
@@ -551,7 +644,7 @@ export function mountApp(root: HTMLElement): void {
         labeled('プリセット', presetSelect),
         randomBtn,
         clearBtn,
-        h('div', { class: 'share' }, [shareBtn, shareStatus]),
+        h('div', { class: 'share' }, [shareBtn, textBtn, shareStatus]),
       ]),
     ]);
   }
@@ -586,21 +679,31 @@ export function mountApp(root: HTMLElement): void {
     return out;
   }
 
-  async function copyLink(): Promise<void> {
-    const url = `${location.origin}${location.pathname}#p=${encodeProgression(state.prog)}`;
+  async function copyToClipboard(text: string, done: string, fallback: string): Promise<void> {
     try {
-      await navigator.clipboard.writeText(url);
-      shareStatus.textContent = 'コピーしました';
+      await navigator.clipboard.writeText(text);
+      shareStatus.textContent = done;
     } catch {
-      shareStatus.textContent = url;
+      shareStatus.textContent = fallback;
     }
     window.setTimeout(() => {
       shareStatus.textContent = '';
     }, 2600);
   }
 
+  function copyLink(): void {
+    const url = `${location.origin}${location.pathname}#p=${encodeProgression(state.prog)}`;
+    void copyToClipboard(url, 'リンクをコピーしました', url);
+  }
+
+  function copyText(): void {
+    void copyToClipboard(progressionText(state.prog), 'テキストをコピーしました', '');
+  }
+
   function syncTransport(): void {
-    playBtn.innerHTML = state.playing ? `${icon('stop')}<span>停止</span>` : `${icon('play')}<span>再生</span>`;
+    playBtn.innerHTML = state.playing
+      ? `${icon('stop')}<span>停止</span>`
+      : `${icon('play')}<span>再生</span>`;
     playBtn.setAttribute('aria-pressed', String(state.playing));
     playBtn.classList.toggle('is-playing', state.playing);
     playBtn.disabled = !state.playing && state.prog.slots.length === 0;
@@ -625,7 +728,10 @@ export function mountApp(root: HTMLElement): void {
   // ボタン群も内包するため label 要素は使わない(クリックが先頭の操作子へ転送され
   // 暴発するのを避ける)。各操作子は自前の aria-label を持つ。
   function labeled(label: string, control: Node): HTMLDivElement {
-    return h('div', { class: 'labeled' }, [h('span', { class: 'labeled-text', text: label }), control]);
+    return h('div', { class: 'labeled' }, [
+      h('span', { class: 'labeled-text', text: label }),
+      control,
+    ]);
   }
 
   function iconButton(
