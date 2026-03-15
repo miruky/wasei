@@ -403,6 +403,8 @@ input {
   border-bottom: 1px solid var(--line);
   padding: 14px 6px;
   transition: background 0.2s var(--ease);
+  animation: fade-up 0.4s var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 32ms);
 }
 
 .chip:hover,
@@ -470,6 +472,7 @@ input {
   cursor: pointer;
   transition: border-color 0.22s var(--ease);
   animation: fade-up 0.34s var(--ease) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
 }
 
 .slot::before {
